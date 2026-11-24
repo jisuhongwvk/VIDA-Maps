@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIDA Maps 아카이브</title>
+<style>
+  :root{--surface:#fcfcfb;--card:#fff;--line:#e3e2dc;--tp:#0b0b0b;--ts:#52514e;--tm:#8a8983;--blue:#2a78d6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--tp);font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:36px 24px 48px}
+  h1{font-size:24px;margin:0 0 6px}
+  .sub{color:var(--ts);font-size:14px;margin-bottom:20px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+  .bar input{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px}
+  .bar button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:8px 14px;font:inherit;font-size:13px;color:var(--ts);cursor:pointer}
+  .bar button.on{background:var(--tp);border-color:var(--tp);color:#fff}
+  h2{font-size:15px;color:var(--ts);margin:26px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
+  a.card:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .card .t{font-size:15px;font-weight:700;margin-bottom:6px;line-height:1.4}
+  .card .d{font-size:13px;color:var(--ts);line-height:1.5;margin-bottom:10px}
+  .card .m{font-size:12px;color:var(--tm);display:flex;gap:10px;flex-wrap:wrap}
+  .tag{background:#f2f1ed;border-radius:4px;padding:1px 7px}
+  .empty{color:var(--tm);font-size:13px;padding:8px 0}
+  .foot{margin-top:36px;font-size:12px;color:var(--tm)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>VIDA GIS 분석 아카이브</h1>
+  <div class="sub">KOICA-WV VIDA 사업 (페루 Loreto · 볼리비아 Beni) 지도·분석 결과물 모음</div>
+
+  <div class="bar">
+    <input id="q" type="search" placeholder="검색 (예: 이동진료, 2025, Riberalta)">
+    <button data-c="all" class="on">전체</button>
+    <button data-c="볼리비아">볼리비아</button>
+    <button data-c="페루">페루</button>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="foot">작성: WVK 개발협력사업1팀 · 각 페이지는 새 탭에서 열립니다</div>
+</div>
+
+<script>
+/* ============================================================
+   새 페이지를 추가할 때는 아래 목록에 { ... }, 한 줄 묶음만 추가하세요.
+   - file: GitHub에 올린 HTML 파일 이름 (대소문자까지 똑같이)
+   - country: "볼리비아" 또는 "페루"
+   - date: 작성일 (최신순으로 자동 정렬됨)
+   ============================================================ */
+const PAGES = [
+  {
+    title: "2025 이동진료 보건소→커뮤니티 거리 분석",
+    desc: "보건소 9개소 → 커뮤니티 10개소, 이동진료 11회. 평균·이상치 제외 평균·중앙값, 재배정 검토 구간, 의사결정 포인트",
+    file: "BOL_mobile_clinic_decision_map_2025_3.html",
+    country: "볼리비아",
+    tags: ["이동진료", "거리분석", "Riberalta", "Guayaramerín"],
+    date: "2026-11-24"
+  },
+  // { title: "제목", desc: "설명", file: "파일이름.html", country: "페루", tags: ["태그"], date: "2026-12-01" },
+];
+
+const COUNTRIES = ["볼리비아", "페루"];
+let cat = "all";
+const q = document.getElementById("q");
+const list = document.getElementById("list");
+
+function render() {
+  const kw = q.value.trim().toLowerCase();
+  const rows = PAGES
+    .filter(p => cat === "all" || p.country === cat)
+    .filter(p => !kw || [p.title, p.desc, p.country, p.date, ...(p.tags || [])].join(" ").toLowerCase().includes(kw))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  list.innerHTML = "";
+  COUNTRIES.filter(c => cat === "all" || c === cat).forEach(c => {
+    const items = rows.filter(p => p.country === c);
+    const h = document.createElement("h2");
+    h.textContent = `${c} (${items.length})`;
+    list.appendChild(h);
+    if (!items.length) {
+      list.insertAdjacentHTML("beforeend", `<div class="empty">아직 등록된 페이지가 없습니다.</div>`);
+      return;
+    }
+    const g = document.createElement("div");
+    g.className = "grid";
+    items.forEach(p => {
+      const a = document.createElement("a");
+      a.className = "card";
+      a.href = p.file;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.innerHTML = `<div class="t"></div><div class="d"></div><div class="m"></div>`;
+      a.querySelector(".t").textContent = p.title;
+      a.querySelector(".d").textContent = p.desc;
+      const m = a.querySelector(".m");
+      [p.date, ...(p.tags || [])].forEach((t, i) => {
+        const s = document.createElement("span");
+        if (i) s.className = "tag";
+        s.textContent = t;
+        m.appendChild(s);
+      });
+      g.appendChild(a);
+    });
+    list.appendChild(g);
+  });
+}
+
+document.querySelectorAll(".bar button").forEach(b => b.addEventListener("click", () => {
+  cat = b.dataset.c;
+  document.querySelectorAll(".bar button").forEach(x => x.classList.toggle("on", x === b));
+  render();
+}));
+q.addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
