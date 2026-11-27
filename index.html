@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <title>VIDA Maps 아카이브</title>
 <style>
   :root{--surface:#fcfcfb;--card:#fff;--line:#e3e2dc;--tp:#0b0b0b;--ts:#52514e;--tm:#8a8983;--blue:#2a78d6}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--surface);color:var(--tp);font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif}
+  body{margin:0;background:var(--surface);color:var(--tp);font-family:Arial,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+  body,button,input{font-family:Arial,"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif!important}
   .wrap{max-width:960px;margin:0 auto;padding:36px 24px 48px}
   h1{font-size:24px;margin:0 0 6px}
   .sub{color:var(--ts);font-size:14px;margin-bottom:20px}
@@ -19,6 +21,10 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
   a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
   a.card:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;min-height:20px}
+  .act{font-size:11.5px;font-weight:700;color:#14967a;background:#e6f4f0;border-radius:4px;padding:2px 8px}
+  .go{font-size:12px;color:var(--tm);margin-left:auto}
+  a.card:hover .go{color:var(--blue)}
   .card .t{font-size:15px;font-weight:700;margin-bottom:6px;line-height:1.4}
   .card .d{font-size:13px;color:var(--ts);line-height:1.5;margin-bottom:10px}
   .card .m{font-size:12px;color:var(--tm);display:flex;gap:10px;flex-wrap:wrap}
@@ -30,7 +36,7 @@
 <body>
 <div class="wrap">
   <h1>VIDA GIS 분석 아카이브</h1>
-  <div class="sub">KOICA-WV VIDA 사업 (페루 Loreto · 볼리비아 Beni) 지도·분석 결과물 모음</div>
+  <div class="sub">KOICA-WV VIDA 사업 (페루 Loreto · 볼리비아 Beni) 지도·분석 결과물 모음 · <span id="cnt"></span></div>
 
   <div class="bar">
     <input id="q" type="search" placeholder="검색 (예: 이동진료, 2025, Riberalta)">
@@ -53,14 +59,24 @@
    ============================================================ */
 const PAGES = [
   {
-    title: "2025 이동진료 보건소→커뮤니티 거리 분석",
+    title: "기후-보건 교육 참여기관(2.3.1)",
+    desc: "Riberalta·Guayaramerín 기후-보건 교육 참여기관 16곳(교육 참여 48명)의 위치와 기관 유형, 위치도 포함",
+    file: "BOL_climate_health_training_2.3.1_2025.html",
+    country: "볼리비아",
+    activity: "2.3.1",
+    tags: ["기후-보건 교육", "Riberalta", "Guayaramerín"],
+    date: "2026-11-27"
+  },
+  {
+    title: "이동진료 보건소→커뮤니티 거리 분석",
     desc: "보건소 9개소 → 커뮤니티 10개소, 이동진료 11회. 평균·이상치 제외 평균·중앙값, 재배정 검토 구간, 의사결정 포인트",
     file: "BOL_mobile_clinic_decision_map_2025_4.html",
     country: "볼리비아",
+    activity: "",
     tags: ["이동진료", "거리분석", "Riberalta", "Guayaramerín"],
     date: "2026-11-24"
   },
-  // { title: "제목", desc: "설명", file: "파일이름.html", country: "페루", tags: ["태그"], date: "2026-12-01" },
+  // { title: "제목", desc: "설명", file: "파일이름.html", country: "페루", activity: "2.3.2", tags: ["태그"], date: "2026-12-01" },
 ];
 
 const COUNTRIES = ["볼리비아", "페루"];
@@ -72,7 +88,7 @@ function render() {
   const kw = q.value.trim().toLowerCase();
   const rows = PAGES
     .filter(p => cat === "all" || p.country === cat)
-    .filter(p => !kw || [p.title, p.desc, p.country, p.date, ...(p.tags || [])].join(" ").toLowerCase().includes(kw))
+    .filter(p => !kw || [p.title, p.desc, p.country, p.date, p.activity || "", ...(p.tags || [])].join(" ").toLowerCase().includes(kw))
     .sort((a, b) => b.date.localeCompare(a.date));
   list.innerHTML = "";
   COUNTRIES.filter(c => cat === "all" || c === cat).forEach(c => {
@@ -92,7 +108,8 @@ function render() {
       a.href = p.file;
       a.target = "_blank";
       a.rel = "noopener";
-      a.innerHTML = `<div class="t"></div><div class="d"></div><div class="m"></div>`;
+      a.innerHTML = `<div class="top"><span class="act"></span><span class="go">열기 →</span></div><div class="t"></div><div class="d"></div><div class="m"></div>`;
+      const act = a.querySelector(".act"); if (p.activity) act.textContent = "활동 " + p.activity; else act.remove();
       a.querySelector(".t").textContent = p.title;
       a.querySelector(".d").textContent = p.desc;
       const m = a.querySelector(".m");
@@ -114,6 +131,7 @@ document.querySelectorAll(".bar button").forEach(b => b.addEventListener("click"
   render();
 }));
 q.addEventListener("input", render);
+document.getElementById("cnt").textContent = `총 ${PAGES.length}건`;
 render();
 </script>
 </body>
